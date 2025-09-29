@@ -3,7 +3,12 @@ import dados from "./../models/dados.js"
 const { bruxos } = dados;
 
 const getAllBruxos = (req, res) => {
+    const { casa } = req.query;
     let resultado = bruxos;
+
+    if (casa) {
+        resultado = resultado.filter(b => b.casa.toLowerCase().includes(casa.toLowerCase()));
+    }
 
     res.status(200).json({
         status: 200,
@@ -42,8 +47,8 @@ const getBruxoById = (req, res) => {
 };
 
 const createBruxo = (req, res) => {
-    const { nome, casa, anoNascimento, especialidade, nivelMagia, ativo } = req.body;
-    const nomeJaExiste = bruxos.find(b => b.nome.toLowerCase() === b.nome.toLowerCase());
+    const { nome, casa, anoNascimento, especialidade, nivelMagia, ativo, varinha } = req.body;
+    const nomeJaExiste = bruxos.find(b => b.nome.toLowerCase() === nome.toLowerCase());
     const casasOficiais = ["Gryffindor", "Slytherin", "Hufflepuff", "Ravenclaw"];
 
     // Validações
@@ -65,6 +70,15 @@ const createBruxo = (req, res) => {
         });
     }
 
+    if (varinha && varinha.length < 3) {
+        return res.status(404).json({
+            status: 404,
+            success: false,
+            message: "Varinha precisa ter mais de 3 caracteres!",
+            error: "VALIDATION_ERROR"
+        });
+    }
+
     const novoBruxo = {
         id: bruxos.length + 1,
         nome,
@@ -83,7 +97,6 @@ const createBruxo = (req, res) => {
             success: false,
             message: "Já existe um bruxo com esse nome!",
             error: "DUPLICATE_WIZARD",
-            existingName: nomeJaExiste
         });
     }
 
@@ -97,7 +110,35 @@ const createBruxo = (req, res) => {
 
 const updateBruxo = (req, res) => {
     const { id } = req.params;
-    const { nome, casa, anoNascimento, especialidade, nivelMagia, ativo } = req.body;
+    const { nome, casa, anoNascimento, especialidade, nivelMagia, ativo, varinha } = req.body;
+    const casasOficiais = ["Gryffindor", "Slytherin", "Hufflepuff", "Ravenclaw"];
+
+        if (!nome) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: "Feitiço mal executado! Verifique os ingredientes",
+            error: "VALIDATION_ERROR",
+            details: "O campo de nome é necessário",
+        });
+    }
+
+    if (!casasOficiais.includes(casa)) {
+        return res.status(400).json({
+            status: 400,
+            success: false,
+            message: `A casa "${casa}" não é válida. Casas permitidas: ${casasOficiais.join(", ")}.`
+        });
+    }
+
+    if (varinha && varinha.length < 3) {
+        return res.status(404).json({
+            status: 404,
+            success: false,
+            message: "Varinha precisa ter mais de 3 caracteres!",
+            error: "VALIDATION_ERROR"
+        });
+    }
 
     if (isNaN(id)) {
         return res.status(400).json({
@@ -148,6 +189,19 @@ const updateBruxo = (req, res) => {
 
 const deleteBruxo = (req, res) => {
     const id = parseInt(req.params.id);
+    const adminParam = req.query.admin;
+    const MAIN_ADMIN = "Miranda";
+
+    const autorizado = adminParam === "true" || adminParam === MAIN_ADMIN;
+
+    if (!autorizado) {
+        return res.status(403).json({
+            status: 403,
+            success: false,
+            message: "Somente o Diretor pode executar essa magia!",
+            error: "FORBIDDEN_ACCESS"
+        });
+    }
 
     // Verificar se o id é válido
     if (isNaN(id)) {
