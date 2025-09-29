@@ -113,14 +113,16 @@ const updateBruxo = (req, res) => {
     const { nome, casa, anoNascimento, especialidade, nivelMagia, ativo, varinha } = req.body;
     const casasOficiais = ["Gryffindor", "Slytherin", "Hufflepuff", "Ravenclaw"];
 
+    if (nome) {
         if (!nome) {
-        return res.status(400).json({
-            status: 400,
-            success: false,
-            message: "Feitiço mal executado! Verifique os ingredientes",
-            error: "VALIDATION_ERROR",
-            details: "O campo de nome é necessário",
-        });
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Feitiço mal executado! Verifique os ingredientes",
+                error: "VALIDATION_ERROR",
+                details: "O campo de nome é necessário",
+            });
+        }
     }
 
     if (!casasOficiais.includes(casa)) {
